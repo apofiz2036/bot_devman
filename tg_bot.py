@@ -24,7 +24,7 @@ while True:
         params['timestamp'] = timestamp
 
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=5)
+        response = requests.get(url, headers=headers, params=params, timeout=60)
         response.raise_for_status()
 
         data = response.json()
@@ -36,7 +36,7 @@ while True:
         elif data['status'] == 'timeout':
             timestamp = data['timestamp_to_request']
 
-        if data['new_attempts'][0]['is_negative'] == True:
+        if data['new_attempts'][0]['is_negative']:
             lesson_title = data['new_attempts'][0]['lesson_title']
             lesson_url = data['new_attempts'][0]['lesson_url']
             text = f'Проверена работа "{lesson_title}", ну блин, есть ошибки. .\n \n Ссылка на урок: {lesson_url}'
