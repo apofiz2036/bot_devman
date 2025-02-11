@@ -30,22 +30,22 @@ def main():
             response = requests.get(url, headers=headers, params=params, timeout=60)
             response.raise_for_status()
 
-            data_from_site_devman = response.json()
-            pprint(data_from_site_devman)
+            devman_response = response.json()
+            pprint(devman_response)
 
-            if data_from_site_devman['status'] == 'found':
-                timestamp = data_from_site_devman['last_attempt_timestamp']
-            elif data_from_site_devman['status'] == 'timeout':
-                timestamp = data_from_site_devman['timestamp_to_request']
+            if devman_response['status'] == 'found':
+                timestamp = devman_response['last_attempt_timestamp']
+            elif devman_response['status'] == 'timeout':
+                timestamp = devman_response['timestamp_to_request']
 
-            if data_from_site_devman['new_attempts'][0]['is_negative']:
-                lesson_title = data_from_site_devman['new_attempts'][0]['lesson_title']
-                lesson_url = data_from_site_devman['new_attempts'][0]['lesson_url']
+            if devman_response['new_attempts'][0]['is_negative']:
+                lesson_title = devman_response['new_attempts'][0]['lesson_title']
+                lesson_url = devman_response['new_attempts'][0]['lesson_url']
                 text = f'Проверена работа "{lesson_title}", ну блин, есть ошибки. .\n \n Ссылка на урок: {lesson_url}'
                 bot.send_message(chat_id=CHAT_ID, text=text)
             else:
-                lesson_title = data_from_site_devman['new_attempts'][0]['lesson_title']
-                lesson_url = data_from_site_devman['new_attempts'][0]['lesson_url']
+                lesson_title = devman_response['new_attempts'][0]['lesson_title']
+                lesson_url = devman_response['new_attempts'][0]['lesson_url']
                 text = f'Проверена работа "{lesson_title}", УРА! ПРИНЯТО!. .\n \n Ссылка на урок: {lesson_url}'
                 bot.send_message(chat_id=CHAT_ID, text=text)
         except requests.exceptions.ReadTimeout:
