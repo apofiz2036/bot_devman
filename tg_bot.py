@@ -4,16 +4,22 @@ from telegram import Bot
 from dotenv import load_dotenv
 from pprint import pprint
 from time import sleep
+import logging
+from logging.handlers import RotatingFileHandler
+
+
+class TelegramLogsHandler(logging.Handler):
+    def __init__(self, tg_bot, chat_id):
+        super().__init__()
+        self.chat_id = chat_id
+        self.tg_bot = tg_bot
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.tg_bot.send_message(chat_id=self.chat_id, text=log_entry)
 
 
 def main():
-    load_dotenv()
-    DEVMAN_TOKEN = os.environ['DEVMAN_TOKEN']
-    TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
-    CHAT_ID = os.environ['CHAT_ID']
-
-    bot = Bot(token=TELEGRAM_BOT_TOKEN)
-
     url = 'https://dvmn.org/api/long_polling/'
     headers = {
         "Authorization": f'Token {DEVMAN_TOKEN}'
@@ -22,6 +28,7 @@ def main():
     timestamp = None
 
     while True:
+
         params = {}
         if timestamp:
             params['timestamp'] = timestamp
@@ -49,13 +56,41 @@ def main():
                 text = f'Проверена работа "{lesson_title}", УРА! ПРИНЯТО!. .\n \n Ссылка на урок: {lesson_url}'
                 bot.send_message(chat_id=CHAT_ID, text=text)
         except requests.exceptions.ReadTimeout:
-            continue
+            logger.debug("Тайм-аут запроса")
         except requests.exceptions.Timeout:
-            print('Нет ответа от сервера')
+            logger.error("Нет ответа от сервера")
         except requests.exceptions.ConnectionError:
-            print('Отрубился интернет')
+            logger.error("Отрубился интернет")
             sleep(60)
+        except Exception as e:
+            logger.error(f'Произошла ошибка: {e}')
+            break
 
 
 if __name__ == '__main__':
+    load_dotenv()
+    DEVMAN_TOKEN = os.environ['DEVMAN_TOKEN']
+    TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
+    CHAT_ID = os.environ['CHAT_ID']
+    bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.WARNING)
+
+    rotating_handler = RotatingFileHandler(
+        'app.log',
+        maxBytes=200,
+        backupCount=2
+    )
+    rotating_handler.setFormatter(logging.Formatter("%(process)d %(levelname)s %(message)s"))
+    logger.addHandler(rotating_handler)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter("%(process)d %(levelname)s %(message)s"))
+    logger.addHandler(stream_handler)
+
+    telegram_handler = TelegramLogsHandler(bot, CHAT_ID)
+    telegram_handler.setFormatter(logging.Formatter("%(process)d %(levelname)s %(message)s"))
+    logger.addHandler(telegram_handler)
+
     main()
