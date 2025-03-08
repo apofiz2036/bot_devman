@@ -63,7 +63,7 @@ def main():
             logger.error("Отрубился интернет")
             sleep(60)
         except Exception as e:
-            logger.error(f'Произошла ошибка: {e}')
+            logger.exception(f'Произошла ошибка: {e}')
             break
 
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     rotating_handler = RotatingFileHandler(
         'app.log',
-        maxBytes=200,
+        maxBytes=20000,
         backupCount=2
     )
     rotating_handler.setFormatter(logging.Formatter("%(process)d %(levelname)s %(message)s"))
