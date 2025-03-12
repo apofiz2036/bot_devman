@@ -80,6 +80,8 @@ def main():
                 lesson_url = devman_response['new_attempts'][0]['lesson_url']
                 text = f'Проверена работа "{lesson_title}", УРА! ПРИНЯТО!. .\n \n Ссылка на урок: {lesson_url}'
                 bot.send_message(chat_id=CHAT_ID, text=text)
+        except requests.exceptions.ReadTimeout:
+            continue       
         except requests.exceptions.Timeout:
             logger.error("Нет ответа от сервера")
         except requests.exceptions.ConnectionError:
